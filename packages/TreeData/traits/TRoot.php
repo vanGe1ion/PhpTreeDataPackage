@@ -6,8 +6,11 @@
  * Time: 12:43
  */
 
-namespace classes\treedata;
+namespace TreeData\traits;
 
+
+use TreeData\exceptions\ChildNotFoundException;
+use TreeData\interfaces\ITreeElem;
 
 use classes\PgSql;
 
@@ -31,11 +34,8 @@ trait TRoot
         return $this->childArray;
     }
 
-    public function AddChild(ITreeData $child){
-        $newPath = $this->GetPath();
-        array_push($newPath, $this->GetCode());
+    public function AddChild(ITreeElem $child){
         $newChild = clone $child;
-        $newChild->SetPath($newPath);
         $this->childArray[$newChild->GetCode()] = $newChild;
     }
 
@@ -43,16 +43,19 @@ trait TRoot
         unset($this->childArray[$index]);
     }
 
-    public function GetChild($index) : ITreeData {
+    public function GetChild($index) : ITreeElem {
         if(isset($this->childArray[$index]))
             return $this->childArray[$index];
         else
-            return null;
+            throw new ChildNotFoundException(
+                explode("::", __METHOD__ )[1] . "(): 
+                Child({$index}) not found in elem({$this->code})"
+            );
     }
 
-    public function DBSave(PgSql $pg, string $query)
+    public function DBSaveRoot(PgSql $pg, array $querySet)
     {
         foreach ($this->childArray as $child)
-            $child->DBSave($pg, $query);
+            $child->DBSave($pg, $this->code, $querySet);
     }
 }

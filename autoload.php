@@ -11,19 +11,16 @@ use exceptions\FileNotFoundException;
 spl_autoload_register(function ($class){
     $classPath = str_replace("\\", "/", $class).".php";
     try {
-        FileConnector($classPath);
+        if(file_exists($classPath))
+            require_once $classPath;
+        else
+            throw new FileNotFoundException("Файл {$classPath} не найден");
     }
     catch (FileNotFoundException $e){
-        echo ($e);
-        var_dump($e->getTrace());
-        die();
+        //Если файл не найден, проверяем другие автолоуды
+
+//        echo ($e);
+//        var_dump($e->getTrace());
+//        die();
     }
 });
-
-
-function FileConnector($path){
-    if(file_exists($path))
-        require_once $path;
-    else
-        throw new FileNotFoundException("Файл {$path} не найден");
-}

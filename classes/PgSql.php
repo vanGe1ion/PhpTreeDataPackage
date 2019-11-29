@@ -9,6 +9,7 @@
 namespace classes;
 
 
+use exceptions\PGConnectionRefusedException;
 
 class PgSql
 {
@@ -19,7 +20,6 @@ class PgSql
     private $port = "";
 
     private $connect = null;
-//    private $prepares = null;
     private $result = null;
 
     public function __construct($host, $login, $passwd, $db, $port = "5432")
@@ -29,8 +29,6 @@ class PgSql
         $this->user = $login;
         $this->passwd = $passwd;
         $this->db = $db;
-
-        $this->prepares = [];
 
         $this->Connect();
     }
@@ -42,20 +40,27 @@ class PgSql
 
     private function Connect()
     {
-        $this->connect = pg_connect("host={$this->host} port={$this->port} dbname={$this->db} user={$this->user} password={$this->passwd}")
-        or die('Не удалось соединиться: ' . pg_last_error());
+        $this->connect = pg_connect("host={$this->host} port={$this->port} dbname={$this->db} user={$this->user} password={$this->passwd}");
+        if(!$this->connect)
+            throw new PGConnectionRefusedException("Connection to {$this->host}:{$this->port} was refused.");
     }
 
     private function Disconnect(){
-        if($this->connect)
-            pg_close($this->connect);
+        pg_close($this->connect);
+    }
+
+    public function ConnRefresh() : bool {
+        if(pg_connection_status($this->connect) == PGSQL_CONNECTION_OK)
+            return true;
+        else
+            return pg_connection_reset($this->connect);
     }
 
     public function QueryExecute(String $query)
     {
         if (!$this->connect)
             return false;
-        if($this->result)
+        if ($this->result)
             pg_free_result($this->result);
 
         $res = pg_query($this->connect, $query);
@@ -82,21 +87,6 @@ class PgSql
             return $res;
     }
 
-//    public function RegisteredExecute(String $queryName, array $params){
-//        if (!$this->connect && !in_array($queryName, $this->prepares))
-//            return false;
-//        if($this->result)
-//            pg_free_result($this->result);
-//
-//        $res = pg_execute($this->connect, $queryName, $params);
-//
-//        if($res){
-//            $this->result = $res;
-//            return true;
-//        }
-//        else
-//            return $res;
-//    }
 
     public function ToArray($resultType = PGSQL_BOTH, $row = null){
         $resultArray = [];
@@ -106,42 +96,33 @@ class PgSql
         return $resultArray;
     }
 
-//    public function QueryRegister(String $queryName, String $query){
-//        if(!$this->connect && in_array($queryName, $this->prepares))
+//    public function SelectArray(String $table, array $terms){
+//        if (!$this->connect)
 //            return false;
-//        $res = pg_prepare($this->connect, $queryName, $query);
-//
-//        return $res ? true : false;
+//        return pg_select($this->connect,$table, $terms);
 //    }
-
-    public function SelectArray(String $table, array $terms){
-        if (!$this->connect)
-            return false;
-        return pg_select($this->connect,$table, $terms);
-    }
-
-    public function InsertArray(String $table, array $row){
-        if (!$this->connect)
-            return false;
-
-        $res = pg_insert($this->connect,$table, $row);
-        return $res ? true : $res;
-    }
-
-    public function UpdateArray(String $table,array $newdata, array $terms){
-        if (!$this->connect)
-            return false;
-
-        return pg_update($this->connect,$table, $newdata, $terms);
-
-    }
-
-    public function DeleteArray(String $table, array $terms){
-        if (!$this->connect)
-            return false;
-
-        return pg_delete($this->connect,$table, $terms);
-    }
+//
+//    public function InsertArray(String $table, array $row){
+//        if (!$this->connect)
+//            return false;
+//
+//        $res = pg_insert($this->connect,$table, $row);
+//        return $res ? true : $res;
+//    }
+//
+//    public function UpdateArray(String $table,array $newdata, array $terms){
+//        if (!$this->connect)
+//            return false;
+//
+//        return pg_update($this->connect,$table, $newdata, $terms);
+//    }
+//
+//    public function DeleteArray(String $table, array $terms){
+//        if (!$this->connect)
+//            return false;
+//
+//        return pg_delete($this->connect,$table, $terms);
+//    }
 
     public function ResultCursorPosition(int $offset){
         pg_result_seek($this->result, $offset);

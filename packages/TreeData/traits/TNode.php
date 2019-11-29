@@ -6,7 +6,7 @@
  * Time: 12:43
  */
 
-namespace classes\treedata;
+namespace TreeData\traits;
 
 
 use classes\PgSql;
@@ -56,11 +56,8 @@ trait TNode
         return $name != "code";
     }
 
-    public function DBSave(PgSql $pg, string $query){
-        $queryParams = [
-            $this->code,
-            end($this->path)
-        ];
+    public function DBSaveNode(PgSql $pg, string $query){
+        $queryParams = [];
 
         foreach ($this->data as $value) {
             if(gettype($value) == "boolean")

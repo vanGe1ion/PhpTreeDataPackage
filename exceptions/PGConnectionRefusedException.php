@@ -2,14 +2,14 @@
 /**
  * Created by PhpStorm.
  * User: ea.kichaev
- * Date: 19.11.2019
- * Time: 14:59
+ * Date: 29.11.2019
+ * Time: 14:49
  */
 
 namespace exceptions;
 
 
-class FileNotFoundException extends BaseException
+class PGConnectionRefusedException extends BaseException
 {
     use TException;
 }

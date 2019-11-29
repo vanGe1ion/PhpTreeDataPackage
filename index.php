@@ -1,75 +1,69 @@
 <?php
 
 include "autoload.php";
+include "packages/TreeData/TreeDataAutoload.php";
+
 use classes\PgSql;
-use classes\treedata\{Node, Tree, Root, ITreeData};
+use TreeData\TreeData;
+use TreeData\objects\{Tree, Root, Node, TreeNavigator};
 
 
-function PositionDataMask($data){
-    return [
-        "name" => $data["name"],
-        "is_need_cert" => ($data["is_need_cert"] == "t" ? true : false)
-    ];
 
+function MyDataMask(&$data){
+    $data["is_need_cert"] = ($data["is_need_cert"] == "t" ? true : false);
 }
-
-function TreeBuilder(PgSql $pg, string $query, array $path, string $codeIndexName, string $dataMask){
-    $pg->ParamExecute($query, [end($path)]);
-    $nodes = $pg->ToArray(PGSQL_ASSOC);
-    $resultArray = [];
-    foreach ($nodes as $nodeData) {
-        $node = null;
-
-        $data = $nodeData;
-        unset($data[$codeIndexName]);
-        $data = $dataMask($data);
-
-        $nextParent = $nodeData[$codeIndexName];
-        $nextPath = $path;
-        array_push($nextPath, $nextParent);
-        $children = TreeBuilder($pg, $query, $nextPath, $codeIndexName, $dataMask);
-
-        if(count($data) > 0) {
-            if (count($children) > 0)
-                $node = new Tree($nextParent, $path, $data, $children);
-            else
-                $node = new Node($nextParent, $path, $data);
-        }
-        else
-            $node = new Root($nextParent, $path, $children);
-
-        array_push($resultArray, $node);
-    }
-    return $resultArray;
-}
-
-function SavePositionFilters(ITreeData $tree, PgSql $pg, string $destination){
-    $saveQuery = "INSERT INTO {$destination} (code, code_parent, name, is_need_cert) VALUES ($1, $2, $3, $4)";
-    foreach ($tree->GetChildren() as $node)
-        $node->DBSave($pg, $saveQuery);
-}
-
-function ReadPositionFilters(Root $root, PgSql $pg){
-    $query = "SELECT code, name, is_need_cert FROM filters.position_filters WHERE code_parent = $1";
-    $root->SetChildren(TreeBuilder($pg, $query, [$root->GetCode()],"code", "PositionDataMask"));
-}
-
 
 //$pgSql = new PgSql("172.16.177.81", "I.NAZEMKINA", "48127883", "GIT_RMIS");
 $pgSqlMy = new PgSql("localhost", "postgres", "", "frmr");
 
 
-$positionRoot = new Root(2, [], []);
-ReadPositionFilters($positionRoot, $pgSqlMy);
-//var_dump($positionRoot);
+//$treeData = new TreeData($pgSqlMy, ["code", "code_parent", "name", "is_need_cert"], "filters.position_filters", 2, "MyDataMask");
+//var_dump($treeData);
+//$treeData->TreeSave($pgSqlMy, "filters.table1");
+
+$tree = new Tree(1, ["name"=>"n1"],[2=>new Root(2, [4=>new Node(4, [])])]);
+//
+$drifter = new TreeNavigator($tree);
+//try{
+//    $drifter->ClimbUp(2);
+//    $drifter->ClimbUp(4);
+////    echo $drifter->GetLevel();
+////    $drifter->GoToParent(3);
+//    var_dump($drifter->pointer);
+//}catch(Exception $e){
+//    echo $e;
+//}
+//$drifter->pointer->name = "nn1";
+//$drifter->pointer->GetChild(2)->name = "nn1";
+//var_dump($tree);
+//
+//$child = $tree->GetChildren()[2];
+//$child->tree = 123;
+//var_dump($child);
+//var_dump($tree);
+
+//try {
+//    $drifter->GoToChild(2);
+//    var_dump($drifter);
+//}catch(\TreeData\exceptions\NodeNotFoundException $e){
+//    echo $e->getMessage();
+//    var_dump( $e->getTraceAsString());
+//}catch (\TreeData\exceptions\NotRootException $e){
+//    echo $e->getMessage();
+//}
+
+//    $drifter->ClimbUp(2);
+//    $drifter->ClimbUp(4);
+    var_dump($drifter->pointer);
+    try {
+        $drifter->ClimbDown();
+        var_dump($drifter->pointer);
+    }catch(\TreeData\exceptions\TreeDataException $e) {
+        echo $e;
+    }
+
 
 
 
 //unset($pgSql);
 unset($pgSqlMy);
-?>
-<html lang="ru">
-<head>
-
-</head>
-</html>
