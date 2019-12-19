@@ -9,6 +9,8 @@
 namespace TreeData\exceptions;
 
 
+use TreeData\traits\TException;
+
 class NavigatorException extends TreeDataException
 {
     use TException;

@@ -9,7 +9,9 @@
 namespace TreeData\exceptions;
 
 
-class ChildNotFoundException extends TreeDataException
+use TreeData\traits\TException;
+
+class ChildNotFoundException extends BranchException
 {
     use TException;
 }

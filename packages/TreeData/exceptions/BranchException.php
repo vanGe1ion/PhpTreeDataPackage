@@ -3,13 +3,15 @@
  * Created by PhpStorm.
  * User: ea.kichaev
  * Date: 29.11.2019
- * Time: 16:50
+ * Time: 16:09
  */
 
 namespace TreeData\exceptions;
 
 
-class NodeException extends TreeDataException
+use TreeData\traits\TException;
+
+class BranchException extends TreeDataException
 {
     use TException;
 }

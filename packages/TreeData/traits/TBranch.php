@@ -12,34 +12,32 @@ namespace TreeData\traits;
 use TreeData\exceptions\ChildNotFoundException;
 use TreeData\interfaces\ITreeElem;
 
-use classes\PgSql;
-
-trait TRoot
+trait TBranch
 {
     private $childArray;
 
-    private function InitRoot(array $children)
-    {
-        $this->SetChildren($children);
-    }
 
-    public function SetChildren(array $children){
+    public function SetChildren(array $childArray)
+    {
         $this->childArray = array();
-        if(count($children) > 0)
-            foreach ($children as $child)
+        if(count($childArray) > 0)
+            foreach ($childArray as $child)
                 $this->AddChild($child);
     }
 
-    public function GetChildren(){
+    public function GetChildren()
+    {
         return $this->childArray;
     }
 
-    public function AddChild(ITreeElem $child){
+    public function AddChild(ITreeElem $child)
+    {
         $newChild = clone $child;
         $this->childArray[$newChild->GetCode()] = $newChild;
     }
 
-    public function RemoveChild($index){
+    public function DeleteChild($index)
+    {
         unset($this->childArray[$index]);
     }
 
@@ -49,13 +47,14 @@ trait TRoot
         else
             throw new ChildNotFoundException(
                 explode("::", __METHOD__ )[1] . "(): 
-                Child({$index}) not found in elem({$this->code})"
+                Child elem({$index}) not found in elem({$this->code})"
             );
     }
 
-    public function DBSaveRoot(PgSql $pg, array $querySet)
-    {
-        foreach ($this->childArray as $child)
-            $child->DBSave($pg, $this->code, $querySet);
-    }
+    //todo преобразовать в ToArray
+//    public function DBSaveRoot(PgSql $pg, array $querySet)
+//    {
+//        foreach ($this->childArray as $child)
+//            $child->DBSave($pg, $this->code, $querySet);
+//    }
 }

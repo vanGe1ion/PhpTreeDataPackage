@@ -8,14 +8,10 @@
 
 namespace TreeData\interfaces;
 
-
-use classes\PgSql;
-
 interface ITreeElem
 {
     public function GetCode();
-
-    public function DBSave(PgSql $pg, string $parent, array $querySet);
-
     public function TreeElemType();
+    //    public function DBSave(PgSql $pg, string $parent, array $querySet);
+
 }

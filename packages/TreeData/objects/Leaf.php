@@ -3,28 +3,28 @@
  * Created by PhpStorm.
  * User: ea.kichaev
  * Date: 25.11.2019
- * Time: 12:48
+ * Time: 12:47
  */
 
 namespace TreeData\objects;
 
 
 use TreeData\interfaces\ITreeElem;
-use TreeData\traits\{TIndex, TLeaf, TBranch};
+use TreeData\traits\{TIndex, TLeaf};
 
-class Node implements ITreeElem
+class Leaf implements ITreeElem
 {
-    use TIndex, TLeaf, TBranch;
+    use TIndex, TLeaf;
 
-    public function __construct(string $code, array $data = [], array $children = [])
+    public function __construct(string $code, array $data = [])
     {
         $this->InitElem($code);
         $this->SetData($data);
-        $this->SetChildren($children);
     }
 
-    public function __clone(){
-        return new Node($this->code, $this->leafData, $this->childArray);
+    public function __clone()
+    {
+        return new Leaf($this->code, $this->leafData);
     }
 
     //todo преобразовать в ToArray
@@ -33,6 +33,5 @@ class Node implements ITreeElem
 //        $this->DBSaveIndex($pg, $parent, $querySet["insert"]);
 //        $query = str_replace("{NodeTarget}", $this->code, $querySet["update"]);
 //        $this->DBSaveNode($pg, $query);
-//        $this->DBSaveRoot($pg, $querySet);
 //    }
 }

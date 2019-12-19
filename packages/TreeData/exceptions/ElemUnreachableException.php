@@ -9,6 +9,8 @@
 namespace TreeData\exceptions;
 
 
+use TreeData\traits\TException;
+
 class ElemUnreachableException extends NavigatorException
 {
     use TException;

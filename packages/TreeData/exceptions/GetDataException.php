@@ -2,14 +2,16 @@
 /**
  * Created by PhpStorm.
  * User: ea.kichaev
- * Date: 27.11.2019
- * Time: 16:41
+ * Date: 19.12.2019
+ * Time: 15:58
  */
 
 namespace TreeData\exceptions;
 
 
-class NotRootException extends NavigatorException
+use TreeData\traits\TException;
+
+class GetDataException extends OperatorException
 {
     use TException;
 }

@@ -2,8 +2,8 @@
 /**
  * Created by PhpStorm.
  * User: ea.kichaev
- * Date: 29.11.2019
- * Time: 16:51
+ * Date: 19.12.2019
+ * Time: 12:12
  */
 
 namespace TreeData\exceptions;
@@ -11,7 +11,7 @@ namespace TreeData\exceptions;
 
 use TreeData\traits\TException;
 
-class DataNotFoundException extends LeafException
+class OperatorException extends TreeDataException
 {
     use TException;
 }

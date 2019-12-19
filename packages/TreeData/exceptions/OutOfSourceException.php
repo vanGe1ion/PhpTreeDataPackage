@@ -9,6 +9,8 @@
 namespace TreeData\exceptions;
 
 
+use TreeData\traits\TException;
+
 class OutOfSourceException extends NavigatorException
 {
     use TException;

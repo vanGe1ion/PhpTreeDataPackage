@@ -8,34 +8,34 @@
 
 namespace TreeData\traits;
 
-
-use classes\PgSql;
-
 trait TIndex
 {
     private $code;
 
 
-    private function InitIndex($code){
+    private function InitElem($code)
+    {
         $this->code = $code;
     }
 
-    public function GetCode(){
+    public function GetCode()
+    {
         return $this->code;
     }
 
+    //todo преобразовать в ToArray
+//    public function DBSaveIndex(PgSql $pg, string $parent, string $query)
+//    {
+//        $queryParams = [
+//            $this->code,
+//            $parent
+//        ];
+//
+//        $pg->ParamExecute($query, $queryParams);
+//    }
 
-    public function DBSaveIndex(PgSql $pg, string $parent, string $query)
+    public function TreeElemType()
     {
-        $queryParams = [
-            $this->code,
-            $parent
-        ];
-
-        $pg->ParamExecute($query, $queryParams);
-    }
-
-    public function TreeElemType(){
         return end(explode("\\", __CLASS__));
     }
 }
