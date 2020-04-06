@@ -30,6 +30,7 @@ trait TBranch
         return $this->childArray;
     }
 
+    //todo duplicate exc
     public function AddChild(ITreeElem $child)
     {
         $newChild = clone $child;
@@ -51,10 +52,9 @@ trait TBranch
             );
     }
 
-    //todo преобразовать в ToArray
-//    public function DBSaveRoot(PgSql $pg, array $querySet)
-//    {
-//        foreach ($this->childArray as $child)
-//            $child->DBSave($pg, $this->code, $querySet);
-//    }
+    public function toTableBranch(&$table, $fields)
+    {
+        foreach ($this->childArray as $code =>$child)
+            $result[$code] = $child->toTable($table, $fields, $this->code);
+    }
 }

@@ -9,97 +9,119 @@
 namespace TreeData;
 
 
-use TreeData\objects\{Leaf, Branch, Node};
-
-use classes\PgSql;
+use TreeData\objects\{
+    Leaf,
+    Branch,
+    Node,
+    Vacant,
+    Navigator,
+    Operator,
+    Map
+};
 
 class TreeData
 {
-//    public $source;
-//    public $drifter;
-//
-//    private $codePropName;
-//    private $pCodePropName;
-//    private $dataFields;
-//
-//    private $querySet = [];
-//
-//    private $dataMaskFun;
-//
-//
-//    public function __construct(PgSql $pg, array $dataFields, string $queryTarget, string $rootCode, string $dataMaskFun = "")
-//    {
-//        $this->source = new Branch($rootCode, []);
-//        $this->ResetDrifter();
-//
-//        $this->codePropName = $dataFields[0];
-//        $this->pCodePropName = $dataFields[1];
-//        unset($dataFields[0], $dataFields[1]);
-//        $this->dataFields = $dataFields;
-//
-//        $queryFields = "";
-//        foreach($this->dataFields as $field)
-//            $queryFields .= ", {$field}";
-//        $this->querySet["select"] = "SELECT {$this->codePropName}{$queryFields} FROM {$queryTarget} WHERE {$this->pCodePropName} = $1";
-//
-//        $this->querySet["insert"] = "INSERT INTO {queryTarget} ({$this->codePropName}, {$this->pCodePropName}) VALUES ($1, $2)";
-//
-//        $queryFields = "";
-//        for ($i = 1; $i < count($this->dataFields) + 1; ++$i)
-//            $queryFields .= ($i == 1 ? "" : ", ") . "{$this->dataFields[$i + 1]} = \${$i}";
-//        $this->querySet["update"] = "UPDATE {queryTarget} SET {$queryFields} WHERE {$this->codePropName} = {NodeTarget}";
-//
-//        $this->dataMaskFun = $dataMaskFun;
-//
-//        $this->source->SetChildren($this->TreeRecurse($pg, $rootCode));
-//    }
-//
-//    public function TreeRecurse(PgSql $pg, $parent){
-//        $pg->ParamExecute($this->querySet["select"], [$parent]);
-//        $nodes = $pg->ToArray(PGSQL_ASSOC);
-//        $resultArray = [];
-//        foreach ($nodes as $nodeData) {
-//            $node = null;
-//
-//            $data = $nodeData;
-//            unset($data[$this->codePropName]);
-//            if($this->dataMaskFun != "")
-//                ($this->dataMaskFun)($data);
-//
-//            $currentCode = $nodeData[$this->codePropName];
-//            $children = $this->TreeRecurse($pg, $currentCode);
-//
-//            if(count($data) > 0) {
-//                if (count($children) > 0)
-//                    $node = new Node($currentCode, $data, $children);
-//                else
-//                    $node = new Leaf($currentCode, $data);
-//            }
-//            else
-//                $node = new Branch($currentCode, $children);
-//
-//            array_push($resultArray, $node);
-//        }
-//        return $resultArray;
-//    }
-//
-//    public function TreeSave(PgSql $pg, string $queryTarget){
-//        $newQuerySet = $this->querySet;
-//        unset($newQuerySet["select"]);
-//        $newQuerySet["insert"] = str_replace("{queryTarget}", $queryTarget, $newQuerySet["insert"]);
-//        $newQuerySet["update"] = str_replace("{queryTarget}", $queryTarget, $newQuerySet["update"]);
-//
-//        foreach ($this->source->GetChildren() as $node)
-//            $node->DBSave($pg, $this->source->GetCode(), $newQuerySet);
-//    }
-//
-//    public function SetDataMaskFun(string $dataMaskFun)
-//    {
-//        $this->dataMaskFun = $dataMaskFun;
-//    }
+    public $tree;
+    private $navigator;
+    private $operator;
+    private $map;
 
-//    public function ResetDrifter()
-//    {
-//        $this->drifter = new TreeDrifter($this->source);
-//    }
+    private $masterFields = [];
+    private $slaveFields = [];
+
+
+    public function __construct(array $table, array $masterFields, string $rootCode)
+    {
+        $this->tree = new Branch($rootCode);
+        $this->masterFields["code"] = $masterFields[0];
+        $this->masterFields["pCode"] = $masterFields[1];
+        $this->TableNormalize($table);
+        $this->tree->SetChildren($this->TreeRecurse($rootCode, $table));
+        $this->navigator = new Navigator($this->tree);
+        $this->OperatorRefresh();
+    }
+
+    private function TreeRecurse($parent, array &$normalizedTable){
+        $currentChilds = $this->FindChildrenOf($parent, $normalizedTable);
+        $result = [];
+
+        foreach ($currentChilds as $code) {
+            $record = $normalizedTable[$code];
+            unset($record[$this->masterFields["pCode"]]);
+
+            $data = [];
+            foreach ($record as $key => $value){
+                if(!in_array($key, $this->slaveFields))
+                    $this->slaveFields[] = $key;
+                if($value != null && $value != "")
+                    $data[$key] = $value;
+            }
+
+            $children = $this->TreeRecurse($code, $normalizedTable);
+
+            $elem = null;
+            if(count($data) > 0) {
+                if (count($children) > 0)
+                    $elem = new Node($code, $data, $children);
+                else
+                    $elem = new Leaf($code, $data);
+            }
+            else
+                if (count($children) > 0)
+                    $elem = new Branch($code, $children);
+                else
+                    $elem = new Vacant($code);
+
+            $result[$code] = $elem;
+        }
+
+        return $result;
+    }
+
+    private function TableNormalize(array &$table)
+    {
+        $result = [];
+        foreach ($table as $record) {
+            $newRecord = $record;
+            unset($newRecord[$this->masterFields["code"]]);
+            $result[$record[$this->masterFields["code"]]] = $newRecord;
+        }
+        $table = $result;
+    }
+
+    //todo mapping?
+    private function FindChildrenOf($pCode, array &$table): array
+    {
+        $result = [];
+        foreach ($table as $code => $record)
+            if($record[$this->masterFields["pCode"]] == $pCode)
+                $result[] = $code;
+        return $result;
+    }
+
+    private function OperatorRefresh()
+    {
+        $this->operator = new Operator($this->tree);
+    }
+
+    public function toJSON()
+    {
+        return json_encode($this->tree);
+    }
+
+    public function fromJSON()
+    {
+        //todo
+    }
+
+    public function toTable()
+    {
+        $result = [];
+        $fields = [
+            "master" => $this->masterFields,
+            "slave" => $this->slaveFields
+        ];
+        $this->tree->toTableBranch($result, $fields);
+        return $result;
+    }
 }

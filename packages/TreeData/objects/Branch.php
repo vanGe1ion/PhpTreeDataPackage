@@ -9,10 +9,12 @@
 namespace TreeData\objects;
 
 
+use JsonSerializable;
+
 use TreeData\interfaces\ITreeElem;
 use TreeData\traits\{TIndex, TBranch};
 
-class Branch implements ITreeElem
+class Branch implements ITreeElem, JsonSerializable
 {
     use TIndex, TBranch;
 
@@ -22,15 +24,31 @@ class Branch implements ITreeElem
         $this->SetChildren($children);
     }
 
+    //todo clone child
     public function __clone()
     {
         return new Branch($this->code, $this->childArray);
     }
 
-    //todo преобразовать в ToArray
-//    public function DBSave(PgSql $pg, string $parent, array $querySet)
-//    {
-//        $this->DBSaveIndex($pg, $parent, $querySet["insert"]);
-//        $this->DBSaveRoot($pg, $querySet);
-//    }
+
+    public function toArray()
+    {
+        $childArrays = [];
+        foreach ($this->childArray as $code => $childElem)
+            $childArrays[$code] = $childElem->toArray();
+        return [
+            "code" => $this->code,
+            "childArray" => $childArrays
+        ];
+    }
+
+    public function toTable(&$table, $fields, $parent)
+    {
+        $index = $this->toTableIndex($fields[0], $parent);
+        foreach ($fields[1] as $field)
+            $index[$field] = null;
+        $table[$this->code] = $index;
+        $this->toTableBranch($table, $fields);
+    }
+
 }

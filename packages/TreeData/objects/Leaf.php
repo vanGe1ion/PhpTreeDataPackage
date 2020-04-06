@@ -9,10 +9,12 @@
 namespace TreeData\objects;
 
 
+use JsonSerializable;
+
 use TreeData\interfaces\ITreeElem;
 use TreeData\traits\{TIndex, TLeaf};
 
-class Leaf implements ITreeElem
+class Leaf implements ITreeElem, JsonSerializable
 {
     use TIndex, TLeaf;
 
@@ -27,11 +29,18 @@ class Leaf implements ITreeElem
         return new Leaf($this->code, $this->leafData);
     }
 
-    //todo преобразовать в ToArray
-//    public function DBSave(PgSql $pg, string $parent, array $querySet)
-//    {
-//        $this->DBSaveIndex($pg, $parent, $querySet["insert"]);
-//        $query = str_replace("{NodeTarget}", $this->code, $querySet["update"]);
-//        $this->DBSaveNode($pg, $query);
-//    }
+    public function toArray()
+    {
+        return [
+            "code" => $this->code,
+            "leafData" => $this->leafData
+        ];
+    }
+
+    public function toTable(&$table, $fields, $parent)
+    {
+        $index = $this->toTableIndex($fields[0], $parent);
+        $data = $this->toTableLeaf($fields[1]);
+        $table[$this->code] = array_merge($index, $data);
+    }
 }

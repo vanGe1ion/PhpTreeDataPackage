@@ -19,7 +19,7 @@ use TreeData\interfaces\ITreeElem;
 
 class Operator
 {
-    public $treeElem;
+    private $treeElem;
 
     public function __construct(ITreeElem $elem)
     {

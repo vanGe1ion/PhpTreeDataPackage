@@ -8,10 +8,15 @@
 
 namespace TreeData\interfaces;
 
+
 interface ITreeElem
 {
+    public function __clone();
+
     public function GetCode();
     public function TreeElemType();
-    //    public function DBSave(PgSql $pg, string $parent, array $querySet);
-
+    public function ConvertTo(int $type);
+    public function toArray();
+    public function toTable(&$table, $fields, $parent);
+    public function JsonSerialize();
 }
